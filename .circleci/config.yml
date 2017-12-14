@@ -69,12 +69,15 @@ jobs:
             export PATH=$HOME/mpi/$MPI/bin:$PATH
             export LD_LIBRARY_PATH=$HOME/mpi/$MPI/lib:$HOME/mpi/$MPI/lib64:$LD_LIBRARY_PATH
             . ~/venv/bin/activate
-            flake8 .
-            flake8 --config=.flake8.cython .
-            autopep8 -r . --global-config .pep8 | tee check_autopep8
-            test ! -s check_autopep8
-            export PYTHONWARNINGS='ignore::FutureWarning'
-            nosetests -s -v -a '!nccl,!gpu,!slow'            
+            pwd
+            ls
+            ls ..
+            ##flake8 .
+            #flake8 --config=.flake8.cython .
+            #autopep8 -r . --global-config .pep8 | tee check_autopep8
+            #test ! -s check_autopep8
+            #export PYTHONWARNINGS='ignore::FutureWarning'
+            #nosetests -s -v -a '!nccl,!gpu,!slow'            
             ## python manage.py test
 
       - store_artifacts:
