@@ -25,14 +25,15 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "requirements.txt" }}
+          - v2-dependencies-{{ checksum "requirements.txt" }}
           # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
+          - v2-dependencies-
 
       - restore_cache:
           keys:
           - openmpi-1.10.3
 
+      # TODO: make openmpi-ready Docker image and mpich-ready Docker image
       - run:
           name: before_install
           command: |
@@ -42,6 +43,7 @@ jobs:
       - save_cache:
           paths:
             - ~/mpi
+            - ~/mpi-build
           key: openmpi-1.10.3
 
       - run:
@@ -60,7 +62,7 @@ jobs:
       - save_cache:
           paths:
             - ~/venv
-          key: v1-dependencies-{{ checksum "requirements.txt" }}
+          key: v2-dependencies-{{ checksum "requirements.txt" }}
         
       # run tests!
       - run:
