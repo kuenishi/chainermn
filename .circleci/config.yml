@@ -31,7 +31,6 @@ jobs:
       - run:
           name: before_install
           command: |
-            PYTHON_CONFIGURE_OPTS="--enable-unicode=ucs2" pyenv install -ks $PYTHON_VERSION;
             python --version;
             export MPI="openmpi-1.10.3"
             export CHAINER_VER="3.1.0"
