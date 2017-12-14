@@ -29,15 +29,16 @@ jobs:
           - openmpi-1.10.3
 
       - run:
-        name: before_install
-        command: |
-          PYTHON_CONFIGURE_OPTS="--enable-unicode=ucs2" pyenv install -ks $PYTHON_VERSION;
-          python --version;
-          export MPI="openmpi-1.10.3"
-          export CHAINER_VER="3.1.0"
-          ./.travis_build_mpi.sh
-          export PATH=$HOME/mpi/$MPI/bin:$PATH
-          export LD_LIBRARY_PATH=$HOME/mpi/$MPI/lib:$HOME/mpi/$MPI/lib64:$LD_LIBRARY_PATH
+          name: before_install
+          command: |
+            PYTHON_CONFIGURE_OPTS="--enable-unicode=ucs2" pyenv install -ks $PYTHON_VERSION;
+            python --version;
+            export MPI="openmpi-1.10.3"
+            export CHAINER_VER="3.1.0"
+            ./.travis_build_mpi.sh
+            export PATH=$HOME/mpi/$MPI/bin:$PATH
+            export LD_LIBRARY_PATH=$HOME/mpi/$MPI/lib:$HOME/mpi/$MPI/lib64:$LD_LIBRARY_PATH
+
       - save_cache:
           paths:
             - ./mpi
