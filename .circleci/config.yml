@@ -26,6 +26,22 @@ jobs:
           - v1-dependencies-{{ checksum "requirements.txt" }}
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
+          - openmpi-1.10.3
+
+      - run:
+        name: before_install
+        command: |
+          PYTHON_CONFIGURE_OPTS="--enable-unicode=ucs2" pyenv install -ks $PYTHON_VERSION;
+          python --version;
+          export MPI="openmpi-1.10.3"
+          export CHAINER_VER="3.1.0"
+          ./.travis_build_mpi.sh
+          export PATH=$HOME/mpi/$MPI/bin:$PATH
+          export LD_LIBRARY_PATH=$HOME/mpi/$MPI/lib:$HOME/mpi/$MPI/lib64:$LD_LIBRARY_PATH
+      - save_cache:
+          paths:
+            - ./mpi
+          key: openmpi-1.10.3
 
       - run:
           name: install dependencies
@@ -35,7 +51,7 @@ jobs:
             ## pip install -r requirements.txt
             pip install nose hacking mock autopep8
             pip install cython mpi4py cffi
-            pip install chainer==3.1.0
+            pip install chainer==$CHAINER_VER
             python setup.py develop --no-nccl
 
       - save_cache:
