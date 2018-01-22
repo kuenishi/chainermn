@@ -80,6 +80,11 @@ def broadcast_naive(mpi_comm, model):
         buf = _memory_utility.array_to_buffer_object(param.data)
         mpi_comm.Bcast(buf)
 
+def broadcast_obj_naive(mpi_comm, obj, root):
+    mpi_comm.bcast(obj, root=root)
+
+def gather_obj_naive(mpi_comm, obj, root):
+    mpi_comm.gather(obj, root=root)
 
 def inter_allreduce_gpu(
         inter_mpi_comm, size, gpu_buffer_a, gpu_buffer_b,

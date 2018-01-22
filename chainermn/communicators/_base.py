@@ -220,6 +220,18 @@ class CommunicatorBase(object):
     def allreduce_grad(self, model):
         raise NotImplementedError()
 
+    def gather_obj(self, obj, rank=0):
+        raise NotImplementedError()
+
+    def broadcast_obj(self, obj, rank=0):
+        raise NotImplementedError()
+
+    def send(self, obj, dest):
+        raise NotImplementedError()
+
+    def recv(self, obj, source):
+        raise NotImplementedError()
+    
     def _init_ranks(self):
         my_ranks = _communication_utility.init_ranks(self.mpi_comm)
         assert my_ranks[0] == self.mpi_comm.rank

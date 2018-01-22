@@ -11,7 +11,7 @@ class DataSizeError(RuntimeError):
 
 INT_MAX = 2147483647
 
-
+# TODO: remove MPI API calls and replace with abstract communicator API call
 def chunked_bcast(obj, comm,
                   max_buf_len=256 * 1024 * 1024,  # 256MB default
                   root=0):
@@ -106,10 +106,7 @@ def scatter_dataset(dataset, comm, root=0, shuffle=False,
         Scattered dataset.
     """
 
-    if hasattr(comm, 'mpi_comm'):
-        comm = comm.mpi_comm
-    assert hasattr(comm, 'send')
-    assert hasattr(comm, 'recv')
+    # TODO: assert ``comm`` is inherited from CommunicatorBase
     assert 0 <= root and root < comm.size
 
     order = None
@@ -122,7 +119,8 @@ def scatter_dataset(dataset, comm, root=0, shuffle=False,
     if comm.rank == 0:
         data = (dataset, order)
 
-    data = chunked_bcast(data, comm, max_buf_len=max_buf_len)
+    #data = chunked_bcast(data, comm, max_buf_len=max_buf_len)
+    data = comm.broadcast_obj(data, comm, max_buf_len=max_buf_len)
     assert data is not None
     (dataset, order) = data
 
