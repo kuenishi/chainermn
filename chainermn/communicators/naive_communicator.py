@@ -5,7 +5,7 @@ from chainermn.communicators import _communication_utility
 from chainermn.communicators import _memory_utility
 
 
-class NaiveCommunicator(_base.CommunicatorBase):
+class NaiveCommunicator(_base.MpiCommunicatorBase):
 
     def __init__(self, mpi_comm):
         super(NaiveCommunicator, self).__init__(mpi_comm)

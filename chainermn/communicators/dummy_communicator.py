@@ -1,9 +1,9 @@
-from chainermn.communicators import _base
+ from chainermn.communicators import _base
 from chainermn.communicators import _communication_utility
 from chainermn.communicators import _memory_utility
 
 
-class DummyCommunicator(_base.CommunicatorBase):
+class DummyCommunicator(_base.MpiCommunicatorBase):
 
     """Dummy communicator that does not communicate at all.
 

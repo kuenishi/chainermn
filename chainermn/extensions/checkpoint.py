@@ -188,7 +188,7 @@ class _MultiNodeCheckpointer(extension.Extension):
         return self.stats.report()
 
     def _sync_file_list(self, remove_remainder=False):
-        file_lists = self.comm.mpi_comm.gather(self.files, root=0)
+        file_lists = self.comm.gather_obj(self.files)
 
         iters0 = None
         if self.comm.rank == 0:
@@ -211,7 +211,7 @@ class _MultiNodeCheckpointer(extension.Extension):
             else:
                 raise RuntimeError("Can't gather checkpoint file names")
 
-        iters0 = self.comm.mpi_comm.bcast(iters0, root=0)
+        iters0 = self.comm.broadcast_obj(iters0)
         files = self._filenames(iters0)
 
         if remove_remainder:
