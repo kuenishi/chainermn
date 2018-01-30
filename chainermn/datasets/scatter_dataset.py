@@ -1,4 +1,3 @@
-import pickle
 import warnings
 
 import chainer.datasets
@@ -8,74 +7,6 @@ import numpy
 class DataSizeError(RuntimeError):
     pass
 
-
-INT_MAX = 2147483647
-
-# TODO: remove MPI API calls and replace with abstract communicator API call
-def chunked_bcast(obj, comm,
-                  max_buf_len=256 * 1024 * 1024,  # 256MB default
-                  root=0):
-    '''Split object to max_buf_len size chunks and send them out
-
-    As mpi4py does not accept an object whose pickled size is larger
-    than signed integer max (2147483647) the object is pickled and
-    split into chunks.
-
-    Another hack could be try with comm.bcast(obj) then rank 0 node
-    will receive OverflowError from mpi4py. But in that case rank > 0
-    nodes shall block busy waiting forever at comm.bcast(obj).
-
-    Args:
-        obj: A Python object that is to be broadcasted.
-        comm: ChainerMN communicator or MPI4py communicator.
-        root (int): The root process of the scatter operation.
-        max_buf_len (int): Max buffer size to be used at broadcasting
-            binaries. Must not be larger than 2147483647.
-    Returns:
-        Broadcasted object.
-    '''
-    assert max_buf_len < INT_MAX
-    assert max_buf_len > 0
-
-    # check XOR condition of obj is None and rank==0
-    # rank \ obj | None | not None |
-    #   == 0     |  NG  |   OK     |
-    #    > 0     |  OK  |   NG     |
-    assert not (obj is None and comm.rank == root)
-    assert not (obj is not None and comm.rank != root)
-
-    if obj is not None and comm.rank == root:
-        pickled_bytes = pickle.dumps(obj, protocol=pickle.HIGHEST_PROTOCOL)
-    else:
-        pickled_bytes = bytearray()
-
-    total_bytes = len(pickled_bytes)
-    total_chunk_num = total_bytes // max_buf_len
-    if (total_bytes % max_buf_len) > 0:
-        total_chunk_num += 1
-
-    data = comm.bcast((total_chunk_num, max_buf_len, total_bytes))
-    assert data is not None
-    (total_chunk_num, max_buf_len, total_bytes) = data
-
-    for i in range(total_chunk_num):
-        b = i * max_buf_len
-        e = min(b + max_buf_len, total_bytes)
-
-        if comm.rank == root:
-            buf = pickled_bytes[b:e]
-        else:
-            buf = bytearray(e - b)
-
-        comm.Bcast(buf, root=root)
-
-        if comm.rank != root:
-            pickled_bytes[b:e] = buf
-
-    if comm.rank > root:
-        obj = pickle.loads(pickled_bytes)
-
-    return obj
 
 
 def scatter_dataset(dataset, comm, root=0, shuffle=False,
@@ -120,7 +51,7 @@ def scatter_dataset(dataset, comm, root=0, shuffle=False,
         data = (dataset, order)
 
     #data = chunked_bcast(data, comm, max_buf_len=max_buf_len)
-    data = comm.broadcast_obj(data, comm, max_buf_len=max_buf_len)
+    data = comm.broadcast_obj(data, max_buf_len=max_buf_len, root=0)
     assert data is not None
     (dataset, order) = data
 
@@ -136,12 +67,13 @@ def scatter_dataset(dataset, comm, root=0, shuffle=False,
             if i == root:
                 mine = chainer.datasets.SubDataset(dataset, b, e, order)
             else:
-                comm.send((b, e), dest=i)
+                print((b, e))
+                comm.send_obj((b, e), dest=i)
         assert mine is not None
         return mine
 
     else:
-        data = comm.recv(source=root)
+        data = comm.recv_obj(source=root)
         assert data is not None
         (b, e) = data
         return chainer.datasets.SubDataset(dataset, b, e, order)

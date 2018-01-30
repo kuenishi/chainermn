@@ -49,23 +49,23 @@ class CommunicatorBase(object):
 
     def alltoall(self, xs):
         raise NotImplementedError()
-        
+
     def broadcast_data(self, model):
         raise NotImplementedError()
 
     def allreduce_grad(self, model):
         raise NotImplementedError()
 
-    def gather_obj(self, obj, rank=0):
+    def gather_obj(self, obj, root=0):
         raise NotImplementedError()
 
-    def broadcast_obj(self, obj, rank=0):
+    def broadcast_obj(self, obj, max_buf_len=None, root=0):
         raise NotImplementedError()
 
-    def send(self, obj, dest):
+    def send_obj(self, obj, dest):
         raise NotImplementedError()
 
-    def recv(self, obj, source):
+    def recv_obj(self, source):
         raise NotImplementedError()
 
 class MpiCommunicatorBase(CommunicatorBase):
@@ -118,6 +118,20 @@ class MpiCommunicatorBase(CommunicatorBase):
             CommunicatorBase
         """
         return self.__class__(mpi_comm=self.mpi_comm.Split(color, key))
+
+    def gather_obj(self, obj, root=0):
+        return self.mpi_comm.gather(obj, root=root)
+
+    def broadcast_obj(self, obj, max_buf_len=None, root=0):
+        if max_buf_len is None:
+            max_buf_len = 256 * 1024 * 1024
+        return _communication_utility.chunked_bcast(obj, self.mpi_comm, max_buf_len=max_buf_len, root=root)
+
+    def send_obj(self, obj, dest):
+        self.mpi_comm.send(obj, dest=dest)
+
+    def recv_obj(self, source):
+        return self.mpi_comm.recv(source=source)
 
     def send(self, obj, dest, tag):
         """A primitive for inter-process transmitter.
@@ -247,7 +261,7 @@ class MpiCommunicatorBase(CommunicatorBase):
 
         return tuple(ys)
 
-    
+
     def _init_ranks(self):
         my_ranks = _communication_utility.init_ranks(self.mpi_comm)
         assert my_ranks[0] == self.mpi_comm.rank
