@@ -233,6 +233,7 @@ class MpiCommunicatorBase(communicator_base.CommunicatorBase):
 
         Args:
             x (numpy.array): Array to be broadcasted.
+            root (int): Rank of root process.
 
         Returns:
             ys (tuple of numpy.ndarray): Received arrays.
@@ -276,6 +277,7 @@ class MpiCommunicatorBase(communicator_base.CommunicatorBase):
 
         Args:
             x (numpy.array): Array to be gathered.
+            root (int): Rank of root process.
 
         Returns:
             ys (numpy.ndarray):
@@ -349,6 +351,7 @@ class MpiCommunicatorBase(communicator_base.CommunicatorBase):
         Args:
             x (numpy.array):
                 Array to be scattered with shape (#proc, [data-shape]).
+            root (int): Rank of root process.
 
         Returns:
             ys (numpy.ndarray):
@@ -393,9 +396,6 @@ class MpiCommunicatorBase(communicator_base.CommunicatorBase):
         self.mpi_comm.Scatter(sbuf, rbuf, root)
 
         return rbuf.reshape(shape)
-
-    def broadcast_data(self, model):
-        raise NotImplementedError()
 
     def allreduce_obj(self, obj):
         # Summation by default
