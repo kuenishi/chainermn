@@ -366,12 +366,13 @@ class MpiCommunicatorBase(communicator_base.CommunicatorBase):
 
         if is_master:
             # Type check.
-            if xs.dtype != numpy.float32:
-                raise TypeError('scatter only support dtype == numpy.float32')
-
             msgtype = _MessageType(xs)
 
             if msgtype.is_tuple:
+                if xs[0].dtype != numpy.float32:
+                    raise TypeError(
+                        'scatter only support dtype == numpy.float32')
+
                 if len(msgtype.shapes) != self.size:
                     raise ValueError(
                         'the length of xs must be consistent '
@@ -379,10 +380,16 @@ class MpiCommunicatorBase(communicator_base.CommunicatorBase):
 
                 msgtype = tuple([_MessageType(x) for x in xs])
                 shapes = [mty.shapes[0] for mty in msgtype]
-                xs = xp.hstack([x.reshape(-1) for x in xs])
+                # concatenate([x.reshape(-1) ... ], axis=0) will fail
+                xs = xp.concatenate([x.reshape(1, -1) for x in xs], axis=1)
 
             else:
                 assert len(msgtype.shapes) == 1
+
+                if xs.dtype != numpy.float32:
+                    raise TypeError(
+                        'scatter only support dtype == numpy.float32')
+
 
                 if msgtype.shapes[0][0] != self.mpi_comm.size:
                     raise ValueError(
