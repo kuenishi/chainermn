@@ -315,6 +315,10 @@ class MpiCommunicatorBase(communicator_base.CommunicatorBase):
             rbuf = numpy.empty(numpy.prod(shape), dtype=numpy.float32)
         else:
             rbuf = None
+
+        if chainer.cuda.get_array_module(x) is not numpy:
+            chainer.cuda.Stream.null.synchronize()
+
         self.mpi_comm.Gather(sbuf, rbuf, root)
 
         if is_master:
@@ -390,6 +394,8 @@ class MpiCommunicatorBase(communicator_base.CommunicatorBase):
         # Scatter data.
         if is_master:
             sbuf = _memory_utility.array_to_buffer_object(x)
+            if chainer.cuda.get_array_module(x) is not numpy:
+                chainer.cuda.Stream.null.synchronize()
         else:
             sbuf = None
         rbuf = numpy.empty(numpy.prod(shape), dtype=numpy.float32)
