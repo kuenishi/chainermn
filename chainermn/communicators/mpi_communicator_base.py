@@ -248,8 +248,7 @@ class MpiCommunicatorBase(communicator_base.CommunicatorBase):
                 raise TypeError('Tuple data cannot be broadcasted')
 
             elif x.dtype != numpy.float32:
-                raise ValueError(
-                    'MPI broadcast only supports dtype == numpy.float32')
+                raise TypeError('bcast only supports dtype == numpy.float32')
 
             msgtype = self.mpi_comm.bcast(msgtype, root)
             shape = msgtype.shapes[0]
@@ -305,7 +304,7 @@ class MpiCommunicatorBase(communicator_base.CommunicatorBase):
                         'gather cannot handle different shapes of data')
 
         if x.dtype != numpy.float32:
-            raise ValueError('gather only support dtype == numpy.float32')
+            raise TypeError('gather only supports dtype == numpy.float32')
 
         # Gather data.
         sbuf = _memory_utility.array_to_buffer_object(x)
@@ -335,6 +334,68 @@ class MpiCommunicatorBase(communicator_base.CommunicatorBase):
 
     def gather_obj(self, obj, root=0):
         return self.mpi_comm.gather(obj, root=root)
+
+    def scatter(self, x, root=0):
+        """A primitive of inter-process scatter communication.
+
+        This method tries to invoke scatter communication within the
+        communicator. All processes in the communicator are expected to
+        invoke ``scatter()``. This method relies on mpi4py fast communication
+        optimized for numpy arrays, as well as ``send()`` and ``recv()``.
+
+        Note that this method can only handle the same shapes of data
+        over all processes, and cannot handle tuple data.
+
+        Args:
+            x (numpy.array):
+                Array to be scattered with shape (#proc, [data-shape]).
+
+        Returns:
+            ys (numpy.ndarray):
+                Received arrays with shape ([data-shape]).
+        """
+        chainer.utils.experimental(
+            'chainermn.communicators.CommunicatorBase.scatter')
+
+        is_master = self.mpi_comm.rank == root
+
+        # Type check.
+        if is_master:
+            msgtype = _MessageType(x)
+
+            if msgtype.is_tuple:
+                raise TypeError('scatter cannot handle tuple data')
+
+            assert len(msgtype.shapes) == 1
+
+            if msgtype.shapes[0][0] != self.mpi_comm.size:
+                raise ValueError(
+                    'scatter received inconsistent number of inputs '
+                    'with communicator size')
+
+            if x.dtype != numpy.float32:
+                raise TypeError('scatter only support dtype == numpy.float32')
+
+            msgtype = _MessageType(x[0])
+
+        else:
+            msgtype = None
+
+        msgtype = self.mpi_comm.bcast(msgtype, root)
+        shape = msgtype.shapes[0]
+
+        # Scatter data.
+        if is_master:
+            sbuf = _memory_utility.array_to_buffer_object(x)
+        else:
+            sbuf = None
+        rbuf = numpy.empty(numpy.prod(shape), dtype=numpy.float32)
+        self.mpi_comm.Scatter(sbuf, rbuf, root)
+
+        return rbuf.reshape(shape)
+
+    def broadcast_data(self, model):
+        raise NotImplementedError()
 
     def allreduce_obj(self, obj):
         # Summation by default
