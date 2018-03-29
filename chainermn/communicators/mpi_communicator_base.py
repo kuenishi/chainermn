@@ -361,7 +361,6 @@ class MpiCommunicatorBase(communicator_base.CommunicatorBase):
         chainer.utils.experimental(
             'chainermn.communicators.CommunicatorBase.scatter')
 
-        xp = chainer.cuda.get_array_module(xs)
         is_master = self.mpi_comm.rank == root
 
         if is_master:
@@ -378,6 +377,7 @@ class MpiCommunicatorBase(communicator_base.CommunicatorBase):
                         'the length of xs must be consistent '
                         'with communicator size')
 
+                xp = chainer.cuda.get_array_module(*xs)
                 msgtype = tuple([_MessageType(x) for x in xs])
                 shapes = [mty.shapes[0] for mty in msgtype]
                 # concatenate([x.reshape(-1) ... ], axis=0) will fail
@@ -396,6 +396,7 @@ class MpiCommunicatorBase(communicator_base.CommunicatorBase):
                         'scatter received inconsistent number of inputs '
                         'with communicator size')
 
+                xp = chainer.cuda.get_array_module(xs)
                 msgtype = tuple([_MessageType(xs[0]) for _ in range(self.size)])
                 shapes = [xs.shape[1:] for _ in range(self.size)]
 
