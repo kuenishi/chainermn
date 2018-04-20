@@ -321,6 +321,39 @@ class MpiCommunicatorBase(communicator_base.CommunicatorBase):
             self.mpi_comm.Gatherv(sbuf, None, root)
             return None
 
+    def allgather(self, x):
+        chainer.utils.experimental(
+            'chainermn.communicators.MPICommunicatorBase.allgather')
+
+        msgtype = _MessageType(x)
+        msgtypes = self.mpi_comm.allgather(msgtype)
+
+        # Type check.
+        for msgtype in msgtypes:
+            if msgtype.is_tuple:
+                raise TypeError('allgather cannot handle tuple data')
+
+            assert len(msgtype.shapes) == 1
+
+        if x.dtype != numpy.float32:
+            raise TypeError('allgather only support dtype == numpy.float32')
+
+        # Collective communication.
+        xp = chainer.cuda.get_array_module(x)
+        shapes = [msgtype.shapes[0] for msgtype in msgtypes]
+        sbuf = _memory_utility.array_to_buffer_object(x)
+        rlens = [numpy.prod(s) for s in shapes]
+        rbuf = numpy.empty(sum(rlens), dtype=numpy.float32)
+        if xp is not numpy:
+            chainer.cuda.Stream.null.synchronize()
+        self.mpi_comm.Allgatherv(
+            sbuf,
+            [rbuf, (rlens, _cnt_to_dsp(rlens)), mpi4py.MPI.FLOAT])
+        ys = [rbuf[i:i + l].reshape(s)
+              for i, l, s in zip(_cnt_to_dsp(rlens), rlens, shapes)]
+
+        return tuple(ys)
+
     # Objects
     def send_obj(self, obj, dest):
         self.mpi_comm.send(obj, dest=dest)
