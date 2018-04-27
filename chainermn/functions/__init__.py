@@ -1,5 +1,5 @@
-from chainermn.functions.collective_communication import all_gather  # NOQA
-from chainermn.functions.collective_communication import all_to_all  # NOQA
+from chainermn.functions.collective_communication import allgather  # NOQA
+from chainermn.functions.collective_communication import alltoall  # NOQA
 from chainermn.functions.collective_communication import bcast  # NOQA
 from chainermn.functions.collective_communication import gather  # NOQA
 from chainermn.functions.collective_communication import scatter  # NOQA

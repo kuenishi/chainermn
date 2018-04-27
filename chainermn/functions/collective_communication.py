@@ -203,7 +203,7 @@ class Scatter(chainer.Function):
                 return dummy_var
 
 
-def all_gather(comm, x, device=-1):
+def allgather(comm, x, device=-1):
     """Differentiable all-gather communication between workers.
 
     This function invokes gather communications among processes specified
@@ -223,7 +223,7 @@ def all_gather(comm, x, device=-1):
     return AllGather(comm, device)(x)
 
 
-def all_to_all(comm, xs, device=-1):
+def alltoall(comm, xs, device=-1):
     """Differentiable all-to-all communication between workers.
 
     This function invokes all-to-all communications among processes specified

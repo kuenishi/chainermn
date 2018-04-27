@@ -27,7 +27,7 @@ class TestCollectiveCommunication(unittest.TestCase):
 
     def check_all_gather(self, xs):
         x = xs[self.communicator.rank]
-        ys = chainermn.functions.all_gather(self.communicator, x, self.device)
+        ys = chainermn.functions.allgather(self.communicator, x, self.device)
         e = 0
         for i, y in enumerate(ys):
             e += chainer.functions.mean_squared_error(y, xs[i])
@@ -55,7 +55,7 @@ class TestCollectiveCommunication(unittest.TestCase):
         self.check_all_gather(xs)
 
     def check_all_to_all(self, xs):
-        ys = chainermn.functions.all_to_all(self.communicator, xs, self.device)
+        ys = chainermn.functions.alltoall(self.communicator, xs, self.device)
 
         y = chainer.functions.sum(ys[0])
         for _y in ys[1:]:
